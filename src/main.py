@@ -31,13 +31,63 @@ def sitemap():
     return generate_sitemap(app)
 
 @app.route('/user', methods=['GET'])
-def handle_hello():
+def get_users():
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+    users = User.query.all()
+    all_users = list(map(lambda x: x.serialize(), users))
 
-    return jsonify(response_body), 200
+    return jsonify(all_users), 200
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def get_user_unit(user_id):
+
+    request_body_user = request.get_json()
+    user1 = User.query.get(user_id)
+    user1_ser = user1.serialize()
+
+    return jsonify(user1_ser), 200
+
+@app.route('/user', methods=['POST'])
+def post_user():
+
+    request_body_user = request.get_json()
+
+    user1 = User(first_name = request_body_user["first_name"], email = request_body_user["email"], password = request_body_user["password"])
+    db.session.add(user1)
+    db.session.commit()
+
+    return jsonify(request_body_user), 200
+
+@app.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+
+    request_body_user = request.get_json()
+
+    user1 = User.query.get(user_id)
+    if user1 is None:
+        raise APIException('User not found', status_code=404)
+    if "id" in request_body_user:
+        user1.id = request_body_user["id"]
+    if "first_name" in request_body_user:
+        user1.first_name = request_body_user["first_name"]
+    if "email" in request_body_user:
+        user1.email = request_body_user["email"]
+    db.session.commit()
+
+    return jsonify("ok"), 200
+
+@app.route('/user/<int:user_id>', methods=['DELETE'])
+def del_user(user_id):
+
+    request_body_user = request.get_json()
+
+    user1 = User.query.get(user_id)
+    if user1 is None:
+        raise APIException('User not found', status_code=404)
+    db.session.delete(user1)
+    db.session.commit()
+
+    return jsonify("ok"), 200
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
